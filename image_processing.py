@@ -5,9 +5,8 @@ import math
 
 is_processing = False
 
-# --------------------------------------------------------------------
 # ---------------------- FONCTIONS UTILITAIRES ------------------------
-# --------------------------------------------------------------------
+
 
 def get_rectangle_center(x1, y1, x2, y2):
     cx = (x1 + x2) // 2
@@ -63,13 +62,10 @@ def save_data_json(angle, posx, posy):
     with open("Data.json", "w") as f:
         json.dump(data, f, indent=4)
 
-# --------------------------------------------------------------------
-# -------------------------- PROCESS() -------------------------------
-# --------------------------------------------------------------------
+
 
 def process(image_path):
-    # ⭐ TON CODE EXACT SANS MODIFICATION ⭐
-    # ⬇️ (collé tel quel)
+   
     initial_frame = get_frame(image_path)
     frame = rotate_photo_to_left(initial_frame)
 
@@ -163,14 +159,10 @@ def process(image_path):
 
     return bool(final_containers), posx, posy, inclination_angle
 
-# --------------------------------------------------------------------
-# ----------------------- PROCESS_TRACK() ----------------------------
-# --------------------------------------------------------------------
+
 
 def process_track(image_path, initial_y):
-    # ⭐ TON CODE EXACT SANS MODIFICATION ⭐
-    # (collé tel quel)
-    # ⬇️
+   
     initial_frame = get_frame(image_path)
     frame = rotate_photo_to_left(initial_frame)
 
@@ -252,12 +244,10 @@ def process_track(image_path, initial_y):
     is_processing = False
     return bool(final_containers), posx, posy, inclination_angle
 
-# --------------------------------------------------------------------
-# --------------------------- PROCESS_BACK ---------------------------
-# --------------------------------------------------------------------
+
 
 def process_back(image_path):
-    # ⭐ TON CODE EXACT ⭐
+   
     initial_frame = get_frame(image_path)
     frame = rotate_photo_to_right(initial_frame)
 
