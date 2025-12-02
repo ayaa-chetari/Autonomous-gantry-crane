@@ -4,8 +4,8 @@ Autonomous Gantry Crane – Computer Vision & Embedded Control :
 
 ==> Project Overview : 
 
-This project implements an autonomous gantry crane capable of detecting, approaching, picking up, and placing containers using computer vision and serial communication.
-A Raspberry Pi processes camera images to understand the environment, while an ESP32 handles motor control and actuation.
+This project implements an autonomous gantry crane capable of detecting, approaching, picking up, and placing containers using computer vision.
+A Raspberry Pi processes camera images to understand the environment, while an ESP32 handles motor control.
 The system was intentionally designed without any additional sensors—no ultrasonic, infrared, lidar, or encoders were allowed. All perception and positioning had to be performed exclusively through the camera.
 
 The system performs its tasks automatically through a state machine that coordinates perception and movement.
