@@ -1,19 +1,18 @@
 import serial
 import time
 
-SERIAL_PORT = '/dev/ttyUSB0'
-BAUD_RATE = 115200
+class ESP32Communication:
+    def __init__(self, port='/dev/ttyUSB0', baudrate=115200):
+        self.ser = serial.Serial(port, baudrate, timeout=1)
+        time.sleep(2)
 
-ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-time.sleep(2)
+    def send(self, x, y, angle, mode):
+        data = f"positionX={x};positionY={y};angle={angle};mode={mode}\n"
+        self.ser.write(data.encode())
+        print(f"[SEND] {data.strip()}")
 
-def send_data_esp(x, y, angle, mode):
-    data_to_send = f"positionX = {x} ; positionY = {y} ; angle = {angle} ; mode = {mode}\n"
-    ser.write(data_to_send.encode())
-    print("Données envoyées :", data_to_send.strip())
+        if self.ser.in_waiting > 0:
+            response = self.ser.readline().decode().strip()
+            print(f"[ESP32] {response}")
 
-    if ser.in_waiting > 0:
-        response = ser.readline().decode().strip()
-        print("Réponse ESP32 :", response)
-
-    time.sleep(2)
+        time.sleep(1)
