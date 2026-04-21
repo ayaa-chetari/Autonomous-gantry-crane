@@ -55,7 +55,7 @@ Manages communication between Raspberry Pi and ESP32 via UART:
 
 ---
 
-### 3. Main Controller (`main.py`)
+### 3. Main Controller (`state_machine.py`)
 Implements the state machine and system logic:
 
 - Captures images using Picamera2  
@@ -115,7 +115,7 @@ The system then returns to State 1.
 ```text
 project/
 │
-├── main.py                # State machine (main controller)
+├── state_machine.py                # State machine (main controller)
 ├── communication.py       # UART communication with ESP32
 ├── image_processing.py    # Computer vision algorithms
 │
