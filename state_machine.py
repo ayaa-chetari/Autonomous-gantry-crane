@@ -2,115 +2,122 @@ import os
 import time
 from picamera2 import Picamera2
 
-from image_processing import process, process_track, process_back
-from communication import send_data_esp
+from communication import ESP32Communication
+from image_processing import process, process_back, process_track
 
-def start():
-    global picam2
+
+def capture_image(picam2, save_dir, filename="photo.jpg"):
+    path = os.path.join(save_dir, filename)
+    picam2.capture_file(path)
+    print(f"Captured {path}")
+    return path
+
+
+def run_state_machine():
     picam2 = Picamera2()
     picam2.start()
 
+    esp = ESP32Communication()
+
     state = 1
-    distance_from_start = 0.00
     step_distance = 20.00
     step_distance_feedback = 10.00
     inclination_angle = 0.00
     posx = 0.00
     posy = 0.00
 
-    save_dir = './media/'
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    save_dir = "./media/"
+    os.makedirs(save_dir, exist_ok=True)
 
-    while True:
-        print("State =", state)
+    try:
+        while True:
+            if state == 1:
+                esp.send(0.00, step_distance, inclination_angle, 'r')
 
-        if state == 1:
-            send_data_esp(0.00, step_distance, inclination_angle, 'r')
-
-            filename = os.path.join(save_dir, "photo.jpg")
-            picam2.capture_file(filename)
-
-            global is_processing
-            is_processing = True
-            is_containers, posx, posy, inclination_angle = process(filename)
-
-            while is_processing:
-                continue
-
-            if is_containers:
-                state = 2
-
-            time.sleep(1.5)
-
-        elif state == 2:
-            initial_y = posy
-
-            while posy < 18:
-                if 10 < posy < 14:
-                    send_data_esp(0.00, 5, inclination_angle, 'r')
-                else:
-                    send_data_esp(0.00, step_distance_feedback, inclination_angle, 'r')
-
-                filename = os.path.join(save_dir, "photo.jpg")
-                picam2.capture_file(filename)
-
-                is_processing = True
+                filename = capture_image(picam2, save_dir)
                 is_containers, posx, posy, inclination_angle = process(filename)
+                print(is_containers, posx, posy, inclination_angle)
 
-                while is_processing:
-                    continue
+                if is_containers:
+                    state = 2
 
                 time.sleep(1)
 
-            if 15.7 < posy < 22:
-                send_data_esp(abs(posx - 3), 0.00, inclination_angle, 's')
-                state = 3
+            elif state == 2:
+                initial_y = posy
 
-            time.sleep(7)
+                while posy < 18:
+                    if 10 < posy < 14:
+                        esp.send(0.00, 5, inclination_angle, 'r')
+                    else:
+                        esp.send(0.00, step_distance_feedback, inclination_angle, 'r')
 
-        elif state == 3:
-            send_data_esp(0.00, -10, 0.0, 'r')
+                    filename = capture_image(picam2, save_dir)
+                    is_containers, posx, posy, inclination_angle = process(filename)
+                    print(is_containers, posx, posy, inclination_angle)
+                    time.sleep(1)
 
-            time.sleep(1.5)
+                if 15.7 < posy < 22:
+                    esp.send(abs(posx - 4), 0.00, inclination_angle, 's')
+                    state = 3
+                    time.sleep(7)
+                else:
+                    state = 1
 
-            filename = os.path.join(save_dir, "photo.jpg")
-            picam2.capture_file(filename)
+            elif state == 3:
+                filename = capture_image(picam2, save_dir)
+                inclination_angle, zone_detected, x_zone, y_zone = process_back(filename)
+                print(inclination_angle, zone_detected)
 
-            is_processing = True
-            inclination_angle, zone_detected, x_zone, y_zone = process_back(filename)
+                is_first_step_back = True
 
-            while is_processing:
-                continue
+                while zone_detected is False:
+                    if is_first_step_back:
+                        esp.send(0.00, 0.00, inclination_angle, 'r')
+                        time.sleep(5)
+                        esp.send(0.00, 0.00, inclination_angle, 'r')
+                        is_first_step_back = False
+                        time.sleep(1)
+                    else:
+                        esp.send(0.00, -20, inclination_angle, 'r')
 
-            while zone_detected == False:
-                send_data_esp(0.00, -20, inclination_angle, 'r')
+                    time.sleep(1)
+
+                    filename = capture_image(picam2, save_dir)
+                    inclination_angle, zone_detected, x_zone, y_zone = process_back(filename)
+                    print(inclination_angle, zone_detected)
+
+                print(f"Y ZONE : {y_zone}")
+                print(f"X ZONE : {x_zone}")
 
                 time.sleep(1.5)
 
-                filename = os.path.join(save_dir, "photo.jpg")
-                picam2.capture_file(filename)
+                while y_zone < 25:
+                    esp.send(0.00, -10, inclination_angle, 'r')
+                    time.sleep(1.5)
 
-                is_processing = True
-                inclination_angle, zone_detected, x_zone, y_zone = process_back(filename)
+                    filename = capture_image(picam2, save_dir)
+                    inclination_angle, zone_detected, x_zone, y_zone = process_back(filename)
+                    print(inclination_angle, zone_detected)
 
-                while is_processing:
-                    continue
+                time.sleep(5)
+                esp.send(31 - abs(x_zone), 0.0, 0.0, 'p')
+                time.sleep(10)
 
-            while y_zone < 25:
-                send_data_esp(0.00, -10, inclination_angle, 'r')
-                time.sleep(1.5)
+                state = 1
+                esp.send(0.00, 0.00, inclination_angle, 'r')
+                time.sleep(5)
+                esp.send(0.00, 0.00, inclination_angle, 'r')
 
-                filename = os.path.join(save_dir, "photo.jpg")
-                picam2.capture_file(filename)
+            print("End of loop, state = ", state)
 
-                is_processing = True
-                inclination_angle, zone_detected, x_zone, y_zone = process_back(filename)
+    except KeyboardInterrupt:
+        print("Arrêt du programme.")
 
-                while is_processing:
-                    continue
+    finally:
+        picam2.stop()
+        esp.close()
 
-            send_data_esp(32 - abs(x_zone), 0.0, 0.0, 'p')
-            time.sleep(10)
 
-            state = 1
+if __name__ == "__main__":
+    run_state_machine()
