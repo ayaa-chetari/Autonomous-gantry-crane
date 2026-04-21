@@ -353,22 +353,14 @@ def process_back(image_path):
     return inclination_angle, zone_detected, posx, posy
 
 def make_connection_esp():
-    # Définir le port série (modifie si nécessaire)
-    SERIAL_PORT = '/dev/ttyUSB0'  # Change selon ton port (ex: /dev/ttyACM0 ou COM5 sur Windows)
-    BAUD_RATE = 115200  # Vitesse de communication
 
-    # Attendre que le port série soit prêt
+    SERIAL_PORT = '/dev/ttyUSB0' 
+    BAUD_RATE = 115200 
     ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
     time.sleep(2)  # Laisser l'ESP32 se stabiliser
     return ser
 
-# Définir le port série (modifie si nécessaire)
-SERIAL_PORT = '/dev/ttyUSB0'  # Change selon ton port (ex: /dev/ttyACM0 ou COM5 sur Windows)
-BAUD_RATE = 115200  # Vitesse de communication
 
-# Attendre que le port série soit prêt
-ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-time.sleep(2)
 
 def send_data_esp(x, y, angle, mode):
     data_to_send = f"positionX = {x} ; positionY = {y} ; angle = {angle} ; mode = {mode}\n"  # Format d'envoi
