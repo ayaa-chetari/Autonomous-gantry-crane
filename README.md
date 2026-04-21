@@ -1,80 +1,124 @@
-Autonomous Gantry Crane – Computer Vision & Embedded Control : 
-(Raspberry Pi 4 • OpenCV • Picamera2 • ESP32 • Real-Time Robotics)
+# Autonomous Gantry Crane – Computer Vision & Embedded Control  
+*(Raspberry Pi 4 • OpenCV • Picamera2 • ESP32 • Real-Time Robotics)*
 
+---
 
-==> Project Overview : 
+## Project Overview
 
-This project implements an autonomous gantry crane capable of detecting, approaching, picking up, and placing containers using computer vision.
-A Raspberry Pi processes camera images to understand the environment, while an ESP32 handles motor control.
-The system was intentionally designed without any additional sensors—no ultrasonic, infrared, lidar, or encoders were allowed. All perception and positioning had to be performed exclusively through the camera.
+This project implements an autonomous gantry crane capable of detecting, approaching, picking up, and placing containers using computer vision only.
 
-The system performs its tasks automatically through a state machine that coordinates perception and movement.
+A Raspberry Pi 4 performs real-time image processing, while an ESP32 handles low-level motor control.  
+The system was designed under a strict constraint: no additional sensors (no ultrasonic, infrared, LiDAR, or encoders). All perception and positioning rely entirely on the camera.
 
-==> Objectives : 
+The robot operates autonomously using a state machine that coordinates perception, motion, and actions.
 
-The crane is designed to:
+---
 
-- Detect containers and a vertical reference line using a camera
-- Align its motion using visual feedback
-- Move precisely toward a container and adjust its lateral position
-- Pick up the container through the ESP32
-- Reverse until it detects a drop zone
-- Position itself accurately and place the container
-  
-The system runs fully autonomously once started.
+## Objectives
 
-==>  System Architecture : 
+The system is able to:
 
-1️)  Image Processing (image_processing.py)
+- Detect containers and a vertical reference line  
+- Estimate position and orientation using vision  
+- Align and move precisely toward a container  
+- Pick up the container via ESP32  
+- Detect a drop zone while reversing  
+- Place the container accurately  
 
-- The Raspberry Pi uses OpenCV to extract information from images captured by the Picamera2 module:
-- Detection of a vertical guiding line
-- Orientation estimation through linear regression
-- Detection of containers based on contour geometry
-- Measurement of the container’s position in centimeters
-- Detection of the drop zone during backward movement
+Once started, the system runs fully autonomously.
 
+---
 
+## System Architecture
 
+The project is organized into three main modules:
 
-2️) Communication Layer (communication.py)
+### 1. Image Processing (`image_processing.py`)
+Handles all computer vision tasks using OpenCV:
 
-The Raspberry Pi communicates with an ESP32 through UART.
-Each command sent contains:
+- Edge detection (Canny)  
+- Contour detection  
+- Vertical line detection using linear regression  
+- Container detection based on geometry  
+- Position estimation (pixel to cm conversion)  
+- Drop zone detection during reverse motion  
 
-- Position corrections in X and Y
-- Orientation correction angle
-- A mode defining the type of movement or action
+---
 
-The ESP32 returns acknowledgements when executing these commands.
+### 2. Communication (`communication.py`)
+Manages communication between Raspberry Pi and ESP32 via UART:
 
-3️) Autonomous Behavior – State Machine (state_machine.py)
+- Sends position corrections (X, Y)  
+- Sends orientation correction (angle)  
+- Sends control mode (movement or action)  
+- Receives acknowledgements from ESP32  
 
-The robot behaves according to a three-state control loop:
+---
 
-- State 1 – Forward Search
+### 3. Main Controller (`main.py`)
+Implements the state machine and system logic:
 
-The crane moves forward in predefined increments while scanning for containers using the camera.
+- Captures images using Picamera2  
+- Calls image processing functions  
+- Sends commands to ESP32  
+- Controls the overall robot behavior  
 
-- State 2 – Approach & Alignment
+---
 
-Once a container is detected, the crane moves toward it while continuously adjusting its trajectory based on vision feedback.
+## State Machine
 
-- State 3 – Reverse & Placement
+The system operates with three main states:
 
-After picking up the container, the crane reverses, detects the drop zone, aligns itself, and releases the container.
+### State 1 – Forward Search
+- Moves forward step-by-step  
+- Scans the environment for containers  
 
-The system then returns to State 1 to search for the next object.
+### State 2 – Approach and Alignment
+- Moves toward the detected container  
+- Continuously adjusts trajectory using visual feedback  
+- Aligns precisely before pickup  
 
-==> Technologies Used :
+### State 3 – Reverse and Placement
+- Moves backward  
+- Detects the drop zone  
+- Aligns and releases the container  
 
-Python, OpenCv,Numpy,Picamera2, Serial communication (PySerial), ESP32 microcontroller, Raspberry Pi 4
+The system then returns to State 1.
 
+---
 
+## Workflow
 
+1. Capture image from the camera  
+2. Process image (line and object detection)  
+3. Estimate position and orientation  
+4. Send correction commands to ESP32  
+5. Execute movement  
+6. Repeat until task completion  
 
+---
 
+## Technologies Used
 
+- Python  
+- OpenCV  
+- NumPy  
+- Picamera2  
+- PySerial (UART communication)  
+- Raspberry Pi 4  
+- ESP32  
 
+---
 
+## Project Structure
 
+```text
+project/
+│
+├── main.py                # State machine (main controller)
+├── communication.py       # UART communication with ESP32
+├── image_processing.py    # Computer vision algorithms
+│
+├── media/                 # Captured images
+├── Data.json              # Saved detection data (angle, position)
+└── README.md
